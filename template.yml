@@ -1,0 +1,14 @@
+ROSTemplateFormatVersion: '2015-09-01'
+Transform: 'Aliyun::Serverless-2018-04-03'
+Resources:
+  oss-utils:
+    Type: 'Aliyun::Serverless::Service'
+    Properties:
+      Description: 'OSS utils'
+    packer:
+      Type: 'Aliyun::Serverless::Function'
+      Properties:
+        Handler: tv.yunxi.fc.oss.zip.Ingress::handleRequest
+        Runtime: java8
+        Description: 'OSS files packer'
+        CodeUri: './target/aliyun-oss-zip-1.0-SNAPSHOT.jar'
