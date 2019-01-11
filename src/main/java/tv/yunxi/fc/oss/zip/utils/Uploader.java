@@ -3,6 +3,7 @@ package tv.yunxi.fc.oss.zip.utils;
 import com.aliyun.oss.OSS;
 import com.aliyun.oss.model.*;
 import tv.yunxi.fc.oss.zip.sync.Buffer;
+import tv.yunxi.fc.oss.zip.sync.Status;
 import tv.yunxi.fc.oss.zip.types.FileParts;
 import tv.yunxi.fc.oss.zip.types.OSSClient;
 import tv.yunxi.fc.oss.zip.types.Uploading;
@@ -20,18 +21,20 @@ public class Uploader implements Runnable {
     private final static int THREADS_SIZE = 4;
 
     private CountDownLatch worker;
+    private Status status;
     private Buffer buffer;
     private Logger logger;
     private OSS client;
     private InitiateMultipartUploadResult upload;
     private FileParts parts;
 
-    public static void start(Buffer buffer, Logger logger, Uploading uploading) {
+    public static void start(Status status, Buffer buffer, Logger logger, Uploading uploading) {
         ExecutorService executor = Executors.newFixedThreadPool(THREADS_SIZE);
 
         for (int i = 0; i < THREADS_SIZE; i ++ ) {
             executor.execute(new Uploader(
                     uploading.worker(),
+                    status,
                     buffer,
                     logger,
                     uploading.client(),
@@ -85,8 +88,9 @@ public class Uploader implements Runnable {
         return uploading;
     }
 
-    private Uploader(CountDownLatch worker, Buffer buffer, Logger logger, OSS client, InitiateMultipartUploadResult upload, FileParts parts) {
+    private Uploader(CountDownLatch worker, Status status, Buffer buffer, Logger logger, OSS client, InitiateMultipartUploadResult upload, FileParts parts) {
         this.worker = worker;
+        this.status = status;
         this.buffer = buffer;
         this.logger = logger;
         this.client = client;
@@ -126,6 +130,8 @@ public class Uploader implements Runnable {
             parts.append(result.getPartETag());
 
             logger.debug(String.format("Uploading chunk (%s) fin -> #%d [%d]", upload.getKey(), result.getPartNumber(), result.getPartSize()));
+
+            status.setUploaded(result.getPartSize());
         }
 
         logger.debug(String.format("Uploader thread done :%s", Thread.currentThread().getName()));

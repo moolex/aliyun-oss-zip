@@ -12,12 +12,10 @@ import tv.yunxi.fc.oss.zip.requests.EventRequest;
 import tv.yunxi.fc.oss.zip.requests.EventResponse;
 import tv.yunxi.fc.oss.zip.requests.ResponseData;
 import tv.yunxi.fc.oss.zip.sync.Buffer;
+import tv.yunxi.fc.oss.zip.sync.Status;
 import tv.yunxi.fc.oss.zip.types.OSSClient;
 import tv.yunxi.fc.oss.zip.types.Uploading;
-import tv.yunxi.fc.oss.zip.utils.Packer;
-import tv.yunxi.fc.oss.zip.utils.Downloader;
-import tv.yunxi.fc.oss.zip.utils.Logger;
-import tv.yunxi.fc.oss.zip.utils.Uploader;
+import tv.yunxi.fc.oss.zip.utils.*;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -89,14 +87,17 @@ public class Ingress implements StreamRequestHandler {
 
         Logger logger = new Logger(context.getLogger());
         Buffer buffer = new Buffer(logger);
+        Status status = new Status(target.size());
+
+        Notify notify = Notify.watch(logger, status, request.getNotify());
 
         CountDownLatch master = new CountDownLatch(2);
 
         Uploading upload = Uploader.manager(master, logger, oss, bucket, output);
 
-        Uploader.start(buffer, logger, upload);
+        Uploader.start(status, buffer, logger, upload);
 
-        Downloader.start(target, Packer.start(master, buffer, logger), logger, oss);
+        Downloader.start(target, status, Packer.start(master, status, buffer, logger), logger, oss);
 
         try {
             master.await();
@@ -105,6 +106,8 @@ public class Ingress implements StreamRequestHandler {
         }
 
         client.shutdown();
+
+        notify.stop(upload.result().getLocation());
 
         return upload.result().getLocation();
     }
