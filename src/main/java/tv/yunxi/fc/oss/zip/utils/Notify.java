@@ -50,8 +50,13 @@ public class Notify implements Runnable {
 
         if (MQTT.equals(url.getScheme())) {
             try {
+                String port = "";
+                if (url.getPort() > 0) {
+                    port = String.format(":%d", url.getPort());
+                }
+                String wsa = String.format("ws://%s%s/mqtt", url.getHost(), port);
                 this.mqtt = new MqttClient(
-                        String.format("ws://%s:%d/mqtt", url.getHost(), url.getPort()),
+                        wsa,
                         params.getOrDefault("client", "tv.yunxi.fc.oss.zip.notify"),
                         new MemoryPersistence()
                 );
