@@ -5,6 +5,7 @@ import com.aliyun.oss.model.OSSObject;
 import com.aliyun.oss.model.OSSObjectSummary;
 import org.apache.commons.io.IOUtils;
 import tv.yunxi.fc.oss.zip.errors.Exception;
+import tv.yunxi.fc.oss.zip.requests.ConfirmedFile;
 import tv.yunxi.fc.oss.zip.sync.Status;
 import tv.yunxi.fc.oss.zip.types.FileObject;
 import tv.yunxi.fc.oss.zip.types.OSSClient;
@@ -19,7 +20,7 @@ import java.util.concurrent.Executors;
  * @author moyo
  */
 public class Downloader implements Runnable {
-    private final static int THREADS_SIZE = 4;
+    private final static int THREADS_SIZE = Runtime.getRuntime().availableProcessors();
 
     private Logger logger;
     private Status status;
@@ -29,15 +30,22 @@ public class Downloader implements Runnable {
 
     private CountDownLatch latch;
 
-    public static void start(List<OSSObjectSummary> files, Status status, Packer packer, Logger logger, OSSClient oss) throws Exception {
+    public static void start(List<ConfirmedFile> files, Status status, Packer packer, Logger logger, OSSClient oss) throws Exception {
         OSS client = oss.create();
 
         CountDownLatch latch = new CountDownLatch(files.size());
 
         ExecutorService downloader = Executors.newFixedThreadPool(THREADS_SIZE);
 
-        for (OSSObjectSummary file : files) {
-            downloader.execute(new Downloader(latch, status, packer, logger, client, file));
+        for (ConfirmedFile file : files) {
+            OSSObjectSummary ff = new OSSObjectSummary();
+
+            ff.setBucketName(file.getBucket());
+            ff.setKey(file.getKey());
+            ff.setETag(file.getETag());
+            ff.setSize(file.getSize());
+
+            downloader.execute(new Downloader(latch, status, packer, logger, client, ff));
         }
 
         try {
@@ -66,12 +74,13 @@ public class Downloader implements Runnable {
         OSSObject item = client.getObject(file.getBucketName(), file.getKey());
 
         try {
-            this.packer.put(new FileObject(item.getKey(), IOUtils.toByteArray(item.getObjectContent())));
-            this.latch.countDown();
+            packer.put(new FileObject(item.getKey(), IOUtils.toByteArray(item.getObjectContent())));
             status.setDownloaded();
         } catch (InterruptedException | IOException e) {
             logger.warn(String.format("OSS object get fail [%s/%s]", item.getBucketName(), item.getKey()));
             System.exit(1);
+        } finally {
+            latch.countDown();
         }
     }
 }

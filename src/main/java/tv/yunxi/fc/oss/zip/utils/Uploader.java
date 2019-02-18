@@ -18,7 +18,7 @@ import java.util.concurrent.Executors;
  * @author moyo
  */
 public class Uploader implements Runnable {
-    private final static int THREADS_SIZE = 4;
+    private final static int THREADS_SIZE = Runtime.getRuntime().availableProcessors();
 
     private CountDownLatch worker;
     private Status status;

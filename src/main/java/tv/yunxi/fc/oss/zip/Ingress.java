@@ -3,11 +3,9 @@ package tv.yunxi.fc.oss.zip;
 import com.aliyun.fc.runtime.Context;
 import com.aliyun.fc.runtime.StreamRequestHandler;
 import com.aliyun.oss.OSS;
-import com.aliyun.oss.model.OSSObjectSummary;
-import com.aliyun.oss.model.ObjectListing;
-import com.aliyun.oss.model.SimplifiedObjectMeta;
 import com.google.gson.Gson;
 import tv.yunxi.fc.oss.zip.errors.Exception;
+import tv.yunxi.fc.oss.zip.requests.ConfirmedFile;
 import tv.yunxi.fc.oss.zip.requests.EventRequest;
 import tv.yunxi.fc.oss.zip.requests.EventResponse;
 import tv.yunxi.fc.oss.zip.requests.ResponseData;
@@ -18,8 +16,7 @@ import tv.yunxi.fc.oss.zip.types.Uploading;
 import tv.yunxi.fc.oss.zip.utils.*;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
 /**
@@ -43,8 +40,6 @@ public class Ingress implements StreamRequestHandler {
     }
 
     private String process(EventRequest request, Context context) throws Exception {
-        String bucket = request.getBucket();
-
         OSSClient oss = new OSSClient(String.format("%s.aliyuncs.com", request.getRegion()), context.getExecutionCredentials());
         OSS client = oss.create();
 
@@ -55,49 +50,26 @@ public class Ingress implements StreamRequestHandler {
             output = String.format(output, context.getRequestId().replace("-", ""));
         }
 
-        List<OSSObjectSummary> target = new ArrayList<>();
+        List<ConfirmedFile> files = request.getConfirmedFiles();
 
-        String pkDir = request.getSourceDir();
-        if (pkDir != null && !pkDir.isEmpty()) {
-            String mew = "/";
-            if (!pkDir.endsWith(mew)) {
-                pkDir = String.format("%s%s", pkDir, mew);
-            }
-            ObjectListing dirListing = client.listObjects(bucket, pkDir);
-            List<OSSObjectSummary> dirFiles = dirListing.getObjectSummaries();
-            target.addAll(dirFiles);
-        }
-
-        List<String> pkFiles = request.getSourceFiles();
-        if (pkFiles != null && !pkFiles.isEmpty()) {
-            for (String file : pkFiles) {
-                SimplifiedObjectMeta meta = client.getSimplifiedObjectMeta(bucket, file);
-                OSSObjectSummary s = new OSSObjectSummary();
-                s.setBucketName(bucket);
-                s.setKey(file);
-                s.setETag(meta.getETag());
-                s.setSize(meta.getSize());
-                target.add(s);
-            }
-        }
-
-        if (target.isEmpty()) {
-            throw new Exception("Non files found");
+        if (files == null || files.isEmpty()) {
+            Preparing preparing = new Preparing(context, request.getBucket(), request.getRegion());
+            files = preparing.confirmFiles(request.getSourceDir(), request.getSourceFiles());
         }
 
         Logger logger = new Logger(context.getLogger());
         Buffer buffer = new Buffer(logger);
-        Status status = new Status(target.size());
+        Status status = new Status(files.size());
 
         Notify notify = Notify.watch(logger, status, request.getNotify());
 
         CountDownLatch master = new CountDownLatch(2);
 
-        Uploading upload = Uploader.manager(master, logger, oss, bucket, output);
+        Uploading upload = Uploader.manager(master, logger, oss, request.getBucket(), output);
 
         Uploader.start(status, buffer, logger, upload);
 
-        Downloader.start(target, status, Packer.start(master, status, buffer, logger), logger, oss);
+        Downloader.start(files, status, Packer.start(master, status, buffer, logger), logger, oss);
 
         try {
             master.await();

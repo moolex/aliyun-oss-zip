@@ -16,7 +16,7 @@ import java.util.zip.ZipOutputStream;
  * @author moyo
  */
 public class Packer implements Runnable {
-    private final static int QUEUE_SIZE = 2;
+    private final static int QUEUE_SIZE = Runtime.getRuntime().availableProcessors();
 
     private CountDownLatch master;
     private Status status;

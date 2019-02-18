@@ -18,6 +18,9 @@ public class EventRequest {
     @SerializedName("source-files")
     @Expose
     private List<String> sourceFiles = null;
+    @SerializedName("confirmed-files")
+    @Expose
+    private List<ConfirmedFile> confirmedFiles = null;
     @SerializedName("target-file")
     @Expose
     private String targetFile;
@@ -38,15 +41,17 @@ public class EventRequest {
      * @param sourceDir
      * @param bucket
      * @param sourceFiles
+     * @param confirmedFiles
      * @param targetFile
      * @param notify
      */
-    public EventRequest(String region, String bucket, String sourceDir, List<String> sourceFiles, String targetFile, String notify) {
+    public EventRequest(String region, String bucket, String sourceDir, List<String> sourceFiles, List<ConfirmedFile> confirmedFiles, String targetFile, String notify) {
         super();
         this.region = region;
         this.bucket = bucket;
         this.sourceDir = sourceDir;
         this.sourceFiles = sourceFiles;
+        this.confirmedFiles = confirmedFiles;
         this.targetFile = targetFile;
         this.notify = notify;
     }
@@ -100,6 +105,19 @@ public class EventRequest {
 
     public EventRequest withSourceFiles(List<String> sourceFiles) {
         this.sourceFiles = sourceFiles;
+        return this;
+    }
+
+    public List<ConfirmedFile> getConfirmedFiles() {
+        return confirmedFiles;
+    }
+
+    public void setConfirmedFiles(List<ConfirmedFile> confirmedFiles) {
+        this.confirmedFiles = confirmedFiles;
+    }
+
+    public EventRequest withConfirmedFiles(List<ConfirmedFile> confirmedFiles) {
+        this.confirmedFiles = confirmedFiles;
         return this;
     }
 
