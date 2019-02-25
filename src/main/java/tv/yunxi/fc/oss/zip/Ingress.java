@@ -18,6 +18,7 @@ import tv.yunxi.fc.oss.zip.utils.*;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
+import java.util.zip.GZIPInputStream;
 
 /**
  * @author moyo
@@ -25,7 +26,10 @@ import java.util.concurrent.CountDownLatch;
 public class Ingress implements StreamRequestHandler {
     @Override
     public void handleRequest(InputStream input, OutputStream output, Context context) throws IOException {
-        EventRequest request = new Gson().fromJson(new InputStreamReader(input), EventRequest.class);
+        EventRequest request = new Gson().fromJson(
+                new InputStreamReader(new GZIPInputStream(input)),
+                EventRequest.class
+        );
 
         EventResponse response = new EventResponse();
 

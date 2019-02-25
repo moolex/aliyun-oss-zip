@@ -14,6 +14,7 @@ import tv.yunxi.fc.oss.zip.utils.Preparing;
 
 import java.io.*;
 import java.util.Base64;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * @author moyo
@@ -67,7 +68,12 @@ public class Gateway implements StreamRequestHandler {
                 .withSourceFiles(null)
             ;
 
-            fr.setPayload(new Gson().toJson(event).getBytes());
+            ByteArrayOutputStream gzip = new ByteArrayOutputStream();
+            GZIPOutputStream gzs = new GZIPOutputStream(gzip);
+            gzs.write(new Gson().toJson(event).getBytes());
+            gzs.close();
+
+            fr.setPayload(gzip.toByteArray());
 
             InvokeFunctionResponse ivr = fc.invokeFunction(fr);
 
