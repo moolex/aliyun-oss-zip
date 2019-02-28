@@ -18,11 +18,15 @@ import java.util.concurrent.Executors;
  */
 public class Notify implements Runnable {
     private final static String MQTT = "mqtt";
+    private final static Integer RETRY = 3;
 
     private Logger logger;
     private Status status;
+    private String wsa;
     private IMqttClient mqtt;
+    private String subscribe;
     private MqttTopic topic;
+    private MqttConnectOptions options;
     private volatile boolean running = true;
 
     public static Notify watch(Logger logger, Status status, String callback) throws Exception {
@@ -54,18 +58,23 @@ public class Notify implements Runnable {
                 if (url.getPort() > 0) {
                     port = String.format(":%d", url.getPort());
                 }
-                String wsa = String.format("ws://%s%s/mqtt", url.getHost(), port);
-                this.mqtt = new MqttClient(
+
+                wsa = String.format("ws://%s%s/mqtt", url.getHost(), port);
+
+                mqtt = new MqttClient(
                         wsa,
                         params.getOrDefault("client", "tv.yunxi.fc.oss.zip.notify"),
                         new MemoryPersistence()
                 );
-                MqttConnectOptions options = new MqttConnectOptions();
+
+                options = new MqttConnectOptions();
                 options.setCleanSession(true);
                 options.setConnectionTimeout(3);
                 options.setAutomaticReconnect(true);
-                this.mqtt.connect(options);
-                this.topic = mqtt.getTopic(params.get("topic"));
+
+                subscribe = params.get("topic");
+
+                connect();
             } catch (MqttException e) {
                 throw new Exception(String.format("MQTT client initialize failed -> %s", e.toString()));
             }
@@ -73,6 +82,15 @@ public class Notify implements Runnable {
         }
 
         throw new Exception(String.format("Unsupported notify protocol [%s]", url.getScheme()));
+    }
+
+    private void connect() throws MqttException {
+        logger.info(String.format("Start to connect MQTT/ws -> %s", wsa));
+
+        mqtt.connect(options);
+        topic = mqtt.getTopic(subscribe);
+
+        logger.info(String.format("MQTT/ws connected and topic is '%s'", topic.toString()));
     }
 
     public void stop(String location) {
@@ -85,7 +103,7 @@ public class Notify implements Runnable {
         }
 
         try {
-            this.mqtt.close();
+            mqtt.close();
         } catch (MqttException e) {
             // ignore
         }
@@ -113,14 +131,29 @@ public class Notify implements Runnable {
             progress.setLocation(loc);
         }
 
-        try {
-            topic.publish(
-                new Gson().toJson(progress).getBytes(),
-                1,
-                progress.getFinished()
-            ).waitForCompletion();
-        } catch (MqttException e) {
-            logger.warn(String.format("Notify message send fail -> %s", e.toString()));
+        int retried = 0;
+
+        while (retried < RETRY) {
+            try {
+                topic.publish(
+                        new Gson().toJson(progress).getBytes(),
+                        progress.getFinished() ? 1 : 0,
+                        progress.getFinished()
+                ).waitForCompletion();
+                break;
+            } catch (MqttException e) {
+                logger.warn(String.format("[%d] Notify message send fail -> %s", retried, e.toString()));
+
+                if (e.getReasonCode() == MqttException.REASON_CODE_CLIENT_NOT_CONNECTED) {
+                    try {
+                        connect();
+                    } catch (MqttException e2) {
+                        logger.warn(String.format("MQTT/ws reconnect failed while sending message -> %s", e2.toString()));
+                    }
+                }
+
+                retried ++;
+            }
         }
     }
 }

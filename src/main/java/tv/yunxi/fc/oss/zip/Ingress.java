@@ -27,7 +27,11 @@ public class Ingress implements StreamRequestHandler {
     @Override
     public void handleRequest(InputStream input, OutputStream output, Context context) throws IOException {
         EventRequest request = new Gson().fromJson(
-                new InputStreamReader(new GZIPInputStream(input)),
+                new InputStreamReader(
+                    "true".equals(System.getenv("local"))
+                        ? input
+                        : new GZIPInputStream(input)
+                ),
                 EventRequest.class
         );
 
@@ -64,6 +68,8 @@ public class Ingress implements StreamRequestHandler {
         Logger logger = new Logger(context.getLogger());
         Buffer buffer = new Buffer(logger);
         Status status = new Status(files.size());
+
+        logger.info(String.format("Start to packing with %d files in %s", files.size(), request.getBucket()));
 
         Notify notify = Notify.watch(logger, status, request.getNotify());
 
