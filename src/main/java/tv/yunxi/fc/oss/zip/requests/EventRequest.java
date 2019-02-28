@@ -27,6 +27,9 @@ public class EventRequest {
     @SerializedName("notify")
     @Expose
     private String notify;
+    @SerializedName("process")
+    @Expose
+    private String process;
 
     /**
      * No args constructor for use in serialization
@@ -44,8 +47,9 @@ public class EventRequest {
      * @param confirmedFiles
      * @param targetFile
      * @param notify
+     * @param process
      */
-    public EventRequest(String region, String bucket, String sourceDir, List<String> sourceFiles, List<ConfirmedFile> confirmedFiles, String targetFile, String notify) {
+    public EventRequest(String region, String bucket, String sourceDir, List<String> sourceFiles, List<ConfirmedFile> confirmedFiles, String targetFile, String notify, String process) {
         super();
         this.region = region;
         this.bucket = bucket;
@@ -54,6 +58,7 @@ public class EventRequest {
         this.confirmedFiles = confirmedFiles;
         this.targetFile = targetFile;
         this.notify = notify;
+        this.process = process;
     }
 
     public String getRegion() {
@@ -144,6 +149,19 @@ public class EventRequest {
 
     public EventRequest withNotify(String notify) {
         this.notify = notify;
+        return this;
+    }
+
+    public String getProcess() {
+        return process;
+    }
+
+    public void setProcess(String process) {
+        this.process = process;
+    }
+
+    public EventRequest withProcess(String process) {
+        this.process = process;
         return this;
     }
 

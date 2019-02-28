@@ -79,7 +79,7 @@ public class Ingress implements StreamRequestHandler {
 
         Uploader.start(status, buffer, logger, upload);
 
-        Downloader.start(files, status, Packer.start(master, status, buffer, logger), logger, oss);
+        Downloader.start(files, status, Packer.start(master, status, buffer, logger), logger, oss, request.getProcess());
 
         try {
             master.await();
