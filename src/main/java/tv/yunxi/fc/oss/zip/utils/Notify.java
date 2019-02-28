@@ -61,17 +61,18 @@ public class Notify implements Runnable {
                         new MemoryPersistence()
                 );
                 MqttConnectOptions options = new MqttConnectOptions();
-                options.setConnectionTimeout(3);
                 options.setCleanSession(true);
+                options.setConnectionTimeout(3);
+                options.setAutomaticReconnect(true);
                 this.mqtt.connect(options);
                 this.topic = mqtt.getTopic(params.get("topic"));
             } catch (MqttException e) {
-                throw new Exception(String.format("MQTT client initialize failed %s", e.toString()));
+                throw new Exception(String.format("MQTT client initialize failed -> %s", e.toString()));
             }
             return;
         }
 
-        throw new Exception(String.format("Unsupported notify protocol %s", url.getScheme()));
+        throw new Exception(String.format("Unsupported notify protocol [%s]", url.getScheme()));
     }
 
     public void stop(String location) {
@@ -96,7 +97,7 @@ public class Notify implements Runnable {
             try {
                 callback(status.changed(), null);
             } catch (InterruptedException e) {
-                logger.warn(String.format("Notify thread exception %s", e.toString()));
+                logger.warn(String.format("Notify thread exception -> %s", e.toString()));
             }
         }
     }
@@ -119,7 +120,7 @@ public class Notify implements Runnable {
                 progress.getFinished()
             ).waitForCompletion();
         } catch (MqttException e) {
-            logger.warn(String.format("Notify message send fail %s", e.toString()));
+            logger.warn(String.format("Notify message send fail -> %s", e.toString()));
         }
     }
 }
