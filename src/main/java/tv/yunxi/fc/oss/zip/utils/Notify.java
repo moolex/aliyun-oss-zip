@@ -11,6 +11,7 @@ import tv.yunxi.fc.oss.zip.types.Progress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.Executors;
 
 /**
@@ -63,7 +64,7 @@ public class Notify implements Runnable {
 
                 mqtt = new MqttClient(
                         wsa,
-                        params.getOrDefault("client", "tv.yunxi.fc.oss.zip.notify"),
+                        params.getOrDefault("client", String.format("tv.yunxi.fc.oss.zip.notify:%s", UUID.randomUUID().toString())),
                         new MemoryPersistence()
                 );
 
