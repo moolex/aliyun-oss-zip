@@ -56,6 +56,7 @@ public class Downloader implements Runnable {
         } catch (InterruptedException e) {
             throw new Exception(String.format("Files downloader interrupted %s", e.getMessage()));
         } finally {
+            downloader.shutdown();
             client.shutdown();
         }
     }

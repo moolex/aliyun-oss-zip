@@ -65,7 +65,7 @@ public class Preparing {
     }
 
     private void getFilesMeta(OSS client, String bucket, List<String> files, List<OSSObjectSummary> target) throws Exception {
-        ExecutorService getter = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 8);
+        ExecutorService getter = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 32);
 
         CountDownLatch latch = new CountDownLatch(files.size());
 
@@ -77,6 +77,8 @@ public class Preparing {
             latch.await();
         } catch (InterruptedException e) {
             throw new Exception(String.format("Files meta getter interrupted %s", e.getMessage()));
+        } finally {
+            getter.shutdown();
         }
     }
 }
