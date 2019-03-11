@@ -15,13 +15,15 @@ import java.util.concurrent.CountDownLatch;
  */
 public class FMGetter implements Runnable {
     private CountDownLatch latch;
+    private Logger logger;
     private OSS client;
     private String bucket;
     private String file;
     private List<ConfirmedFile> target;
 
-    FMGetter(CountDownLatch latch, OSS client, String bucket, String file, List<ConfirmedFile> target) {
+    FMGetter(CountDownLatch latch, Logger logger, OSS client, String bucket, String file, List<ConfirmedFile> target) {
         this.latch = latch;
+        this.logger = logger;
         this.client = client;
         this.bucket = bucket;
         this.file = file;
@@ -34,7 +36,7 @@ public class FMGetter implements Runnable {
             String alias = null;
             if (file.contains("?")) {
                 int pos = file.indexOf("?");
-                final Map<String, String> params = Splitter.on('&').trimResults().withKeyValueSeparator("=").split(file.substring(pos+1));
+                final Map<String, String> params = Splitter.on('&').trimResults().withKeyValueSeparator("=").split(file.substring(pos + 1));
                 if (params.containsKey("a")) {
                     alias = params.get("a");
                 }
@@ -49,6 +51,8 @@ public class FMGetter implements Runnable {
             s.setETag(meta.getETag());
             s.setSize(meta.getSize());
             target.add(s);
+        } catch (Exception e) {
+            logger.warn(String.format("File meta get failed [%s] -> %s", file, e.toString()));
         } finally {
             latch.countDown();
         }

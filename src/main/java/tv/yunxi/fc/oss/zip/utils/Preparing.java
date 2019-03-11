@@ -54,19 +54,13 @@ public class Preparing {
             throw new Exception("Non files found");
         }
 
-        Set<ConfirmedFile> confirmed = new TreeSet<>(
-            (f1, f2)
-                -> {
-                int aliased = 0;
-                if (f1.getAlias() != null && f2.getAlias() != null && !f1.getAlias().isEmpty() && !f2.getAlias().isEmpty()) {
-                    aliased = f1.getAlias().compareTo(f2.getAlias());
-                }
-                return f1.getKey().compareTo(f2.getKey()) + aliased;
-            }
-        );
-        confirmed.addAll(target);
+        Set<ConfirmedFile> confirmed1 = new TreeSet<>((f1, f2) -> f1.getKey().compareTo(f2.getKey()));
+        confirmed1.addAll(target);
 
-        return new ArrayList<>(confirmed);
+        Set<ConfirmedFile> confirmed2 = new TreeSet<>((f1, f2) -> f1.getAlias() != null && f2.getAlias() != null ? f1.getAlias().compareTo(f2.getAlias()) : 1);
+        confirmed2.addAll(confirmed1);
+
+        return new ArrayList<>(confirmed2);
     }
 
     private void getFilesMeta(OSS client, String bucket, List<String> files, List<ConfirmedFile> target) throws Exception {
@@ -75,7 +69,7 @@ public class Preparing {
         CountDownLatch latch = new CountDownLatch(files.size());
 
         for (String file : files) {
-            getter.execute(new FMGetter(latch, client, bucket, file, target));
+            getter.execute(new FMGetter(latch, new Logger(context.getLogger()), client, bucket, file, target));
         }
 
         try {
