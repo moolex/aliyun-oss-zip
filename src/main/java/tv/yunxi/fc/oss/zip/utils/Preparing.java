@@ -66,10 +66,11 @@ public class Preparing {
     private void getFilesMeta(OSS client, String bucket, List<String> files, List<ConfirmedFile> target) throws Exception {
         ExecutorService getter = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 32);
 
+        Logger logger = new Logger(context.getLogger());
         CountDownLatch latch = new CountDownLatch(files.size());
 
         for (String file : files) {
-            getter.execute(new FMGetter(latch, new Logger(context.getLogger()), client, bucket, file, target));
+            getter.execute(new FMGetter(latch, logger, client, bucket, file, target));
         }
 
         try {
