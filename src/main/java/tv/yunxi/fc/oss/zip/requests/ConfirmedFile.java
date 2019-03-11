@@ -11,6 +11,9 @@ public class ConfirmedFile {
     @SerializedName("key")
     @Expose
     private String key;
+    @SerializedName("alias")
+    @Expose
+    private String alias;
     @SerializedName("etag")
     @Expose
     private String etag;
@@ -27,15 +30,17 @@ public class ConfirmedFile {
 
     /**
      *
-     * @param etag
      * @param bucket
      * @param key
+     * @param alias
+     * @param etag
      * @param size
      */
-    public ConfirmedFile(String bucket, String key, String etag, Long size) {
+    public ConfirmedFile(String bucket, String key, String alias, String etag, Long size) {
         super();
         this.bucket = bucket;
         this.key = key;
+        this.alias = alias;
         this.etag = etag;
         this.size = size;
     }
@@ -63,6 +68,19 @@ public class ConfirmedFile {
 
     public ConfirmedFile withKey(String key) {
         this.key = key;
+        return this;
+    }
+
+    public String getAlias() {
+        return alias;
+    }
+
+    public void setAlias(String alias) {
+        this.alias = alias;
+    }
+
+    public ConfirmedFile withAlias(String alias) {
+        this.alias = alias;
         return this;
     }
 

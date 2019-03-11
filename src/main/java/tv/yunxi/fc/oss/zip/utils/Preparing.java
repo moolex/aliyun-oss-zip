@@ -32,7 +32,7 @@ public class Preparing {
         OSSClient oss = new OSSClient(String.format("%s.aliyuncs.com", region), context.getExecutionCredentials());
         OSS client = oss.create();
 
-        List<OSSObjectSummary> target = Collections.synchronizedList(new ArrayList<>());
+        List<ConfirmedFile> target = Collections.synchronizedList(new ArrayList<>());
 
         if (dir != null && !dir.isEmpty()) {
             String mew = "/";
@@ -41,7 +41,9 @@ public class Preparing {
             }
             ObjectListing dirListing = client.listObjects(bucket, dir);
             List<OSSObjectSummary> dirFiles = dirListing.getObjectSummaries();
-            target.addAll(dirFiles);
+            for (OSSObjectSummary file : dirFiles) {
+                target.add(new ConfirmedFile(file.getBucketName(), file.getKey(), null, file.getETag(), file.getSize()));
+            }
         }
 
         if (files != null && !files.isEmpty()) {
@@ -52,19 +54,22 @@ public class Preparing {
             throw new Exception("Non files found");
         }
 
-        Set<OSSObjectSummary> confirmed = new TreeSet<>((f1, f2) -> f1.getKey().compareTo(f2.getKey()));
+        Set<ConfirmedFile> confirmed = new TreeSet<>(
+            (f1, f2)
+                -> {
+                int aliased = 0;
+                if (f1.getAlias() != null && f2.getAlias() != null && !f1.getAlias().isEmpty() && !f2.getAlias().isEmpty()) {
+                    aliased = f1.getAlias().compareTo(f2.getAlias());
+                }
+                return f1.getKey().compareTo(f2.getKey()) + aliased;
+            }
+        );
         confirmed.addAll(target);
 
-        List<ConfirmedFile> gFiles = new ArrayList<>();
-
-        for (OSSObjectSummary file : confirmed) {
-            gFiles.add(new ConfirmedFile(file.getBucketName(), file.getKey(), file.getETag(), file.getSize()));
-        }
-
-        return gFiles;
+        return new ArrayList<>(confirmed);
     }
 
-    private void getFilesMeta(OSS client, String bucket, List<String> files, List<OSSObjectSummary> target) throws Exception {
+    private void getFilesMeta(OSS client, String bucket, List<String> files, List<ConfirmedFile> target) throws Exception {
         ExecutorService getter = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 32);
 
         CountDownLatch latch = new CountDownLatch(files.size());

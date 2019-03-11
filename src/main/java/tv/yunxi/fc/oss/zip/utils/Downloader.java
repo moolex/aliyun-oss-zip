@@ -3,7 +3,6 @@ package tv.yunxi.fc.oss.zip.utils;
 import com.aliyun.oss.OSS;
 import com.aliyun.oss.model.GetObjectRequest;
 import com.aliyun.oss.model.OSSObject;
-import com.aliyun.oss.model.OSSObjectSummary;
 import org.apache.commons.io.IOUtils;
 import tv.yunxi.fc.oss.zip.errors.Exception;
 import tv.yunxi.fc.oss.zip.requests.ConfirmedFile;
@@ -27,7 +26,7 @@ public class Downloader implements Runnable {
     private Status status;
     private Packer packer;
     private OSS client;
-    private OSSObjectSummary file;
+    private ConfirmedFile file;
     private String process;
 
     private CountDownLatch latch;
@@ -40,14 +39,7 @@ public class Downloader implements Runnable {
         ExecutorService downloader = Executors.newFixedThreadPool(THREADS_SIZE);
 
         for (ConfirmedFile file : files) {
-            OSSObjectSummary ff = new OSSObjectSummary();
-
-            ff.setBucketName(file.getBucket());
-            ff.setKey(file.getKey());
-            ff.setETag(file.getETag());
-            ff.setSize(file.getSize());
-
-            downloader.execute(new Downloader(latch, status, packer, logger, client, ff, process));
+            downloader.execute(new Downloader(latch, status, packer, logger, client, file, process));
         }
 
         try {
@@ -61,7 +53,7 @@ public class Downloader implements Runnable {
         }
     }
 
-    private Downloader(CountDownLatch latch, Status status, Packer packer, Logger logger, OSS client, OSSObjectSummary file, String process) {
+    private Downloader(CountDownLatch latch, Status status, Packer packer, Logger logger, OSS client, ConfirmedFile file, String process) {
         this.latch = latch;
         this.status = status;
         this.packer = packer;
@@ -73,20 +65,20 @@ public class Downloader implements Runnable {
 
     @Override
     public void run() {
-        logger.debug(String.format("Start to download file %s", file.getKey()));
+        logger.debug(String.format("Start to download file %s [%s]", file.getKey(), file.getAlias()));
 
         OSSObject item;
 
         if (process == null || process.isEmpty()) {
-            item = client.getObject(file.getBucketName(), file.getKey());
+            item = client.getObject(file.getBucket(), file.getKey());
         } else {
-            GetObjectRequest req = new GetObjectRequest(file.getBucketName(), file.getKey());
+            GetObjectRequest req = new GetObjectRequest(file.getBucket(), file.getKey());
             req.setProcess(process);
             item = client.getObject(req);
         }
 
         try {
-            packer.put(new FileObject(item.getKey(), IOUtils.toByteArray(item.getObjectContent())));
+            packer.put(new FileObject(item.getKey(), file.getAlias(), IOUtils.toByteArray(item.getObjectContent())));
             status.setDownloaded();
         } catch (InterruptedException | IOException e) {
             logger.warn(String.format("OSS object get fail [%s/%s]", item.getBucketName(), item.getKey()));

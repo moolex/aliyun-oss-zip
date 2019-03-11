@@ -58,10 +58,15 @@ public class Packer implements Runnable {
             try {
                 FileObject file = get();
 
-                zip.putNextEntry(new ZipEntry(file.name()));
+                String named = file.name();
+                if (file.alias() != null && !file.alias().isEmpty()) {
+                    named = file.alias();
+                }
+
+                zip.putNextEntry(new ZipEntry(named));
                 zip.write(file.data());
 
-                logger.debug(String.format("Packer write file %s size = %d", file.name(), file.data().length));
+                logger.debug(String.format("Packer write file %s size = %d", named, file.data().length));
 
                 status.setPacked();
             } catch (InterruptedException | IOException e) {
