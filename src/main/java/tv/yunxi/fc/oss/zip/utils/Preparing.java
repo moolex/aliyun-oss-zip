@@ -17,12 +17,14 @@ import java.util.concurrent.Executors;
  * @author moyo
  */
 public class Preparing {
+    private Logger logger;
     private Context context;
 
     private String bucket;
     private String region;
 
     public Preparing(Context context, String bucket, String region) {
+        this.logger = new Logger(context.getLogger());
         this.context = context;
         this.bucket = bucket;
         this.region = region;
@@ -54,13 +56,7 @@ public class Preparing {
             throw new Exception("Non files found");
         }
 
-        Set<ConfirmedFile> confirmed1 = new TreeSet<>((f1, f2) -> f1.getKey().compareTo(f2.getKey()));
-        confirmed1.addAll(target);
-
-        Set<ConfirmedFile> confirmed2 = new TreeSet<>((f1, f2) -> f1.getAlias() != null && f2.getAlias() != null ? f1.getAlias().compareTo(f2.getAlias()) : 1);
-        confirmed2.addAll(confirmed1);
-
-        return new ArrayList<>(confirmed2);
+        return new Coordinator(logger).duplicates(target);
     }
 
     private void getFilesMeta(OSS client, String bucket, List<String> files, List<ConfirmedFile> target) throws Exception {

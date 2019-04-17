@@ -59,9 +59,6 @@ public class Packer implements Runnable {
                 FileObject file = get();
 
                 String named = file.name();
-                if (file.alias() != null && !file.alias().isEmpty()) {
-                    named = file.alias();
-                }
 
                 zip.putNextEntry(new ZipEntry(named));
                 zip.write(file.data());

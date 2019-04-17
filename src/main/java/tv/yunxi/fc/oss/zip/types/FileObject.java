@@ -15,11 +15,10 @@ public class FileObject {
     }
 
     public String name() {
+        if (alias != null && !alias.isEmpty()) {
+            return alias;
+        }
         return name;
-    }
-
-    public String alias() {
-        return alias;
     }
 
     public byte[] data() {

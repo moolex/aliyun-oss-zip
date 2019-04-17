@@ -3,6 +3,9 @@ package tv.yunxi.fc.oss.zip.requests;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
+/**
+ * @author moyo [auto-gens]
+ */
 public class ConfirmedFile {
 
     @SerializedName("bucket")
@@ -108,6 +111,14 @@ public class ConfirmedFile {
     public ConfirmedFile withSize(Long size) {
         this.size = size;
         return this;
+    }
+
+    public String getName() {
+        if (alias != null && !alias.isEmpty()) {
+            return alias;
+        } else {
+            return key.substring(key.lastIndexOf("/") + 1);
+        }
     }
 
 }
