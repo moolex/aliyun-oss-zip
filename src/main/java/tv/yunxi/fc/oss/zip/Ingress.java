@@ -33,7 +33,7 @@ public class Ingress implements StreamRequestHandler {
         } else {
             try {
                 reader = new InputStreamReader(new GZIPInputStream(input));
-            } catch (ZipException e) {
+            } catch (EOFException | ZipException e) {
                 context.getLogger().warn(String.format("Reading input as GZip failed -> %s", e.getMessage()));
                 return;
             }
