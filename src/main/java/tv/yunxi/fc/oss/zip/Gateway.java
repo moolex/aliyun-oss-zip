@@ -23,7 +23,7 @@ public class Gateway implements StreamRequestHandler {
     @Override
     public void handleRequest(InputStream input, OutputStream output, Context context) throws IOException {
         ApiRequest request = new Gson().fromJson(new InputStreamReader(input), ApiRequest.class);
-        if (request.getBody() == null) {
+        if (request == null || request.getBody() == null) {
             context.getLogger().warn("Request payload decode failed (is null)");
             return;
         }
