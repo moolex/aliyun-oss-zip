@@ -19,6 +19,7 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.ZipException;
 
 /**
  * @author moyo
@@ -26,14 +27,19 @@ import java.util.zip.GZIPInputStream;
 public class Ingress implements StreamRequestHandler {
     @Override
     public void handleRequest(InputStream input, OutputStream output, Context context) throws IOException {
-        EventRequest request = new Gson().fromJson(
-                new InputStreamReader(
-                    "true".equals(System.getenv("local"))
-                        ? input
-                        : new GZIPInputStream(input)
-                ),
-                EventRequest.class
-        );
+        InputStreamReader reader;
+        if ("true".equals(System.getenv("local"))) {
+            reader = new InputStreamReader(input);
+        } else {
+            try {
+                reader = new InputStreamReader(new GZIPInputStream(input));
+            } catch (ZipException e) {
+                context.getLogger().warn(String.format("Reading input as GZip failed -> %s", e.getMessage()));
+                return;
+            }
+        }
+
+        EventRequest request = new Gson().fromJson(reader, EventRequest.class);
 
         EventResponse response = new EventResponse();
 
