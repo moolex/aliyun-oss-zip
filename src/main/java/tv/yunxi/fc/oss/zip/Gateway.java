@@ -66,7 +66,7 @@ public class Gateway implements StreamRequestHandler {
             // new event with confirmed files
             event
                 .withConfirmedFiles(
-                    preparing.confirmFiles(event.getSourceDir(), event.getSourceFiles())
+                    preparing.confirmFiles(event.getSourceDir(), event.getSourceFiles(), event.getGroupedFiles())
                 )
                 .withSourceDir(null)
                 .withSourceFiles(null)

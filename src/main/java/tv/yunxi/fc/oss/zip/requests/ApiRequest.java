@@ -6,7 +6,7 @@ import com.google.gson.annotations.SerializedName;
 import java.util.Map;
 
 /**
- * @author moyo
+ * @author moyo [auto-gens]
  */
 public class ApiRequest {
 

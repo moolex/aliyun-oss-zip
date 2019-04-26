@@ -8,19 +8,22 @@ import com.google.gson.annotations.SerializedName;
  */
 public class ConfirmedFile {
 
-    @SerializedName("bucket")
+    @SerializedName("b")
     @Expose
     private String bucket;
-    @SerializedName("key")
+    @SerializedName("g")
+    @Expose
+    private String group;
+    @SerializedName("k")
     @Expose
     private String key;
-    @SerializedName("alias")
+    @SerializedName("a")
     @Expose
     private String alias;
-    @SerializedName("etag")
+    @SerializedName("e")
     @Expose
     private String etag;
-    @SerializedName("size")
+    @SerializedName("s")
     @Expose
     private Long size;
 
@@ -34,14 +37,16 @@ public class ConfirmedFile {
     /**
      *
      * @param bucket
+     * @param group
      * @param key
      * @param alias
      * @param etag
      * @param size
      */
-    public ConfirmedFile(String bucket, String key, String alias, String etag, Long size) {
+    public ConfirmedFile(String bucket, String group, String key, String alias, String etag, Long size) {
         super();
         this.bucket = bucket;
+        this.group = group;
         this.key = key;
         this.alias = alias;
         this.etag = etag;
@@ -58,6 +63,19 @@ public class ConfirmedFile {
 
     public ConfirmedFile withBucket(String bucket) {
         this.bucket = bucket;
+        return this;
+    }
+
+    public String getGroup() {
+        return group;
+    }
+
+    public void setGroup(String group) {
+        this.group = group;
+    }
+
+    public ConfirmedFile withGroup(String group) {
+        this.group = group;
         return this;
     }
 

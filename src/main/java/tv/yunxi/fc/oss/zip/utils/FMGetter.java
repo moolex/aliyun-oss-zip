@@ -18,14 +18,16 @@ public class FMGetter implements Runnable {
     private Logger logger;
     private OSS client;
     private String bucket;
+    private String group;
     private String file;
     private List<ConfirmedFile> target;
 
-    FMGetter(CountDownLatch latch, Logger logger, OSS client, String bucket, String file, List<ConfirmedFile> target) {
+    FMGetter(CountDownLatch latch, Logger logger, OSS client, String bucket, String group, String file, List<ConfirmedFile> target) {
         this.latch = latch;
         this.logger = logger;
         this.client = client;
         this.bucket = bucket;
+        this.group = group;
         this.file = file;
         this.target = target;
     }
@@ -46,6 +48,7 @@ public class FMGetter implements Runnable {
             SimplifiedObjectMeta meta = client.getSimplifiedObjectMeta(bucket, file);
             ConfirmedFile s = new ConfirmedFile();
             s.setBucket(bucket);
+            s.setGroup(group);
             s.setKey(file);
             s.setAlias(alias);
             s.setETag(meta.getETag());

@@ -30,7 +30,7 @@ public class Preparing {
         this.region = region;
     }
 
-    public List<ConfirmedFile> confirmFiles(String dir, List<String> files) throws Exception {
+    public List<ConfirmedFile> confirmFiles(String dir, List<String> files, Map<String, List<String>> grouped) throws Exception {
         OSSClient oss = new OSSClient(String.format("%s.aliyuncs.com", region), context.getExecutionCredentials());
         OSS client = oss.create();
 
@@ -44,12 +44,18 @@ public class Preparing {
             ObjectListing dirListing = client.listObjects(bucket, dir);
             List<OSSObjectSummary> dirFiles = dirListing.getObjectSummaries();
             for (OSSObjectSummary file : dirFiles) {
-                target.add(new ConfirmedFile(file.getBucketName(), file.getKey(), null, file.getETag(), file.getSize()));
+                target.add(new ConfirmedFile(file.getBucketName(), null, file.getKey(), null, file.getETag(), file.getSize()));
             }
         }
 
         if (files != null && !files.isEmpty()) {
-            getFilesMeta(client, bucket, files, target);
+            getFilesMeta(client, bucket, null, files, target);
+        }
+
+        if (grouped != null && !grouped.isEmpty()) {
+            for (Map.Entry<String, List<String>> entry : grouped.entrySet()) {
+                getFilesMeta(client, bucket, entry.getKey(), entry.getValue(), target);
+            }
         }
 
         if (target.isEmpty()) {
@@ -59,14 +65,14 @@ public class Preparing {
         return new Coordinator(logger).duplicates(target);
     }
 
-    private void getFilesMeta(OSS client, String bucket, List<String> files, List<ConfirmedFile> target) throws Exception {
+    private void getFilesMeta(OSS client, String bucket, String group, List<String> files, List<ConfirmedFile> target) throws Exception {
         ExecutorService getter = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 32);
 
         Logger logger = new Logger(context.getLogger());
         CountDownLatch latch = new CountDownLatch(files.size());
 
         for (String file : files) {
-            getter.execute(new FMGetter(latch, logger, client, bucket, file, target));
+            getter.execute(new FMGetter(latch, logger, client, bucket, group, file, target));
         }
 
         try {

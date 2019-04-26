@@ -1,9 +1,14 @@
 package tv.yunxi.fc.oss.zip.requests;
 
 import java.util.List;
+import java.util.Map;
+
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
+/**
+ * @author moyo [auto-gens]
+ */
 public class EventRequest {
 
     @SerializedName("region")
@@ -18,6 +23,9 @@ public class EventRequest {
     @SerializedName("source-files")
     @Expose
     private List<String> sourceFiles = null;
+    @SerializedName("grouped-files")
+    @Expose
+    private Map<String, List<String>> groupedFiles = null;
     @SerializedName("confirmed-files")
     @Expose
     private List<ConfirmedFile> confirmedFiles = null;
@@ -110,6 +118,19 @@ public class EventRequest {
 
     public EventRequest withSourceFiles(List<String> sourceFiles) {
         this.sourceFiles = sourceFiles;
+        return this;
+    }
+
+    public Map<String, List<String>> getGroupedFiles() {
+        return groupedFiles;
+    }
+
+    public void setGroupedFiles(Map<String, List<String>> groupedFiles) {
+        this.groupedFiles = groupedFiles;
+    }
+
+    public EventRequest withGroupedFiles(Map<String, List<String>> groupedFiles) {
+        this.groupedFiles = groupedFiles;
         return this;
     }
 

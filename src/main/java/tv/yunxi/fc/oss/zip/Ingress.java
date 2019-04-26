@@ -68,7 +68,7 @@ public class Ingress implements StreamRequestHandler {
 
         if (files == null || files.isEmpty()) {
             Preparing preparing = new Preparing(context, request.getBucket(), request.getRegion());
-            files = preparing.confirmFiles(request.getSourceDir(), request.getSourceFiles());
+            files = preparing.confirmFiles(request.getSourceDir(), request.getSourceFiles(), request.getGroupedFiles());
         }
 
         Logger logger = new Logger(context.getLogger());

@@ -65,7 +65,7 @@ public class Downloader implements Runnable {
 
     @Override
     public void run() {
-        logger.debug(String.format("Start to download file %s [%s]", file.getKey(), file.getAlias()));
+        logger.debug(String.format("Start to download file %s [%s:%s]", file.getKey(), file.getGroup(), file.getAlias()));
 
         OSSObject item;
 
@@ -78,7 +78,7 @@ public class Downloader implements Runnable {
         }
 
         try {
-            packer.put(new FileObject(item.getKey(), file.getAlias(), IOUtils.toByteArray(item.getObjectContent())));
+            packer.put(new FileObject(item.getKey(), file.getGroup(), file.getAlias(), IOUtils.toByteArray(item.getObjectContent())));
             status.setDownloaded();
         } catch (InterruptedException | IOException e) {
             logger.warn(String.format("OSS object get fail [%s/%s]", item.getBucketName(), item.getKey()));

@@ -3,6 +3,9 @@ package tv.yunxi.fc.oss.zip.requests;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
+/**
+ * @author moyo [auto-gens]
+ */
 public class EventResponse {
 
     @SerializedName("code")
